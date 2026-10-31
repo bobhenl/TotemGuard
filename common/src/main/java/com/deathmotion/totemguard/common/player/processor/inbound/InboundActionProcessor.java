@@ -50,6 +50,7 @@ public class InboundActionProcessor extends ProcessorInbound {
         if (event.isCancelled()) return;
         final PacketTypeCommon packetType = event.getPacketType();
 
+        // 26.3 replaced the serverbound swing (ANIMATION) with PUNCH
         if (packetType == PacketType.Play.Client.ANIMATION || packetType == PacketType.Play.Client.PUNCH) {
             if (tickData.isInvalidLeftClick()) return;
             clickData.recordLeftClick();

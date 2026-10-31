@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 @UtilityClass
 public final class CompatibilityUtil {
 
-    private final PEVersion MIN_PE_VERSION = PEVersion.fromString("2.11.1");
+    private final PEVersion MIN_PE_VERSION = PEVersion.fromString("2.14.0");
 
     public boolean isCompatible() {
         final TGPlatform platform = TGPlatform.getInstance();

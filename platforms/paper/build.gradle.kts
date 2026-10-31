@@ -30,6 +30,7 @@ paperRuns {
     version("1.21.2", java = 21)
     version("1.21.4", java = 21)
     version("26.1.2", java = 25)
+    version("26.3", java = 25)
 
     defaultFolia("1.21.11", java = 21)
     folia("1.19.4", java = 17)
