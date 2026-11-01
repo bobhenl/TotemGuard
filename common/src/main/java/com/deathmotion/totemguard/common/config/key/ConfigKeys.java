@@ -50,6 +50,13 @@ public final class ConfigKeys {
 
     public static final ConfigKey<Boolean> TICK_SKIP_KEEP_ALIVE_VALIDATION = ConfigKey.bool("tick.skip-keep-alive-validation");
 
+    public static final ConfigKey<Integer> TRANSACTION_TIMEOUT_SECONDS = ConfigKey.integer("transaction-timeout.timeout-seconds");
+    public static final ConfigKey<Integer> TRANSACTION_TIMEOUT_FIRST_REPLY_SECONDS = ConfigKey.integer("transaction-timeout.first-reply-timeout-seconds");
+    public static final ConfigKey<Integer> TRANSACTION_TIMEOUT_FREEZE_GAP_MILLIS = ConfigKey.integer("transaction-timeout.freeze-gap-millis");
+    public static final ConfigKey<Integer> TRANSACTION_TIMEOUT_MAX_SECONDS = ConfigKey.integer("transaction-timeout.max-seconds");
+    public static final ConfigKey<Boolean> TRANSACTION_TIMEOUT_EXEMPT_LEGACY = ConfigKey.bool("transaction-timeout.exempt-legacy-clients");
+    public static final ConfigKey<List<String>> TRANSACTION_TIMEOUT_EXEMPT_BRANDS = ConfigKey.stringList("transaction-timeout.exempt-brands");
+
     public static final ConfigKey<Boolean> DEBUG_MODIFIER_KICK_ENABLED = ConfigKey.bool("debug-modifier-kick.enabled");
 
     public static final ConfigKey<String> TELEPORT_COMMAND = ConfigKey.string("teleport.command");

@@ -216,8 +216,8 @@ public class TGPlayer implements TGUser {
         cacheData();
     }
 
-    public void timedOut() {
-        disconnect("[TotemGuard] Timed out");
+    public void timedOut(String detail) {
+        disconnect(Component.text("[TotemGuard] Timed out"), "[TotemGuard] Timed out (" + detail + ")");
     }
 
     public void disconnect(String reason) {

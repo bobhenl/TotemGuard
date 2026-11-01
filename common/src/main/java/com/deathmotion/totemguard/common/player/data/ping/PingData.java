@@ -57,6 +57,15 @@ public class PingData {
     private boolean lastTeleportReplySkipped;
     @Getter
     private int lastSkippedTeleportReplyCount;
+    // Last movement or tick-end packet, and when the current unbroken run of them started
+    @Getter
+    private volatile long lastClientTickAt;
+    @Getter
+    private volatile long clientActiveSince;
+    // Oldest pending transaction we already logged a skipped timeout kick for
+    @Getter
+    @lombok.Setter
+    private volatile long timeoutNoticeFor;
 
     static int clampPing(long ping) {
         if (ping < 0L || ping > Integer.MAX_VALUE) {
@@ -64,6 +73,16 @@ public class PingData {
         }
 
         return (int) ping;
+    }
+
+    // A frozen client (loading terrain, a hidden browser tab, a long GC) stops sending these,
+    // and the time it spends frozen must not count against it
+    public void clientTicked(long timestamp, long freezeGapMillis) {
+        long last = lastClientTickAt;
+        if (last == 0L || timestamp - last > freezeGapMillis) {
+            clientActiveSince = timestamp;
+        }
+        lastClientTickAt = timestamp;
     }
 
     public void keepAliveSent(long id, long timestamp) {

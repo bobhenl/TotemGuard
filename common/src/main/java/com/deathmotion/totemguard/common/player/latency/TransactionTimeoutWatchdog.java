@@ -19,18 +19,23 @@
 package com.deathmotion.totemguard.common.player.latency;
 
 import com.deathmotion.totemguard.common.TGPlatform;
+import com.deathmotion.totemguard.common.config.schema.TransactionTimeoutOptions;
 import com.deathmotion.totemguard.common.player.PlayerRepositoryImpl;
 import com.deathmotion.totemguard.common.player.TGPlayer;
+import com.deathmotion.totemguard.common.player.data.ping.PingData;
 import com.deathmotion.totemguard.common.util.ScheduledTask;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+// Kicks a client that keeps playing but stops answering our transactions. Clients answer
+// transactions on their main thread but keep-alives off it, so a client whose main thread
+// stalls (terrain loading, a hidden browser tab, slow hardware) still passes the vanilla
+// keep-alive check. Time it spends frozen does not count here, and web / legacy clients
+// that cannot keep up are left to the vanilla keep-alive timeout entirely.
 public final class TransactionTimeoutWatchdog {
 
-    private static final long TIMEOUT_MILLIS = 30_000L;
-    // Slow clients (web and legacy ones through protocol translation) can take longer than 30s to load in and answer the first one
-    private static final long FIRST_REPLY_TIMEOUT_MILLIS = 120_000L;
     private static final long PERIOD_SECONDS = 1L;
 
     private final PlayerRepositoryImpl playerRepository;
@@ -55,15 +60,52 @@ public final class TransactionTimeoutWatchdog {
     private void tick() {
         long now = System.currentTimeMillis();
         try {
+            TransactionTimeoutOptions options = TGPlatform.getInstance().getConfigRepository().configView().transactionTimeout();
             for (TGPlayer player : playerRepository.getPlayers()) {
-                long oldest = player.getPingData().getOldestPendingTransactionSentAt();
-                if (oldest == 0L) continue;
-                long timeout = player.getPingData().isObservedTransactionReply() ? TIMEOUT_MILLIS : FIRST_REPLY_TIMEOUT_MILLIS;
-                if (now - oldest < timeout) continue;
-                player.timedOut();
+                check(player, options, now);
             }
         } catch (Exception ex) {
             TGPlatform.getInstance().getLogger().log(Level.WARNING, "Transaction timeout watchdog tick failed", ex);
         }
+    }
+
+    private void check(TGPlayer player, TransactionTimeoutOptions options, long now) {
+        PingData pingData = player.getPingData();
+        long oldest = pingData.getOldestPendingTransactionSentAt();
+        if (oldest == 0L) return;
+
+        long timeout = pingData.isObservedTransactionReply() ? options.timeoutMillis() : options.firstReplyTimeoutMillis();
+        long total = now - oldest;
+        if (total < timeout) return;
+
+        String exemptReason = exemptReason(player, options);
+        if (exemptReason != null) {
+            if (pingData.getTimeoutNoticeFor() != oldest) {
+                pingData.setTimeoutNoticeFor(oldest);
+                TGPlatform.getInstance().getLogger().info("Not kicking " + player.getName() + " for an unanswered transaction ("
+                        + total / 1000 + "s, " + exemptReason + "), the vanilla keep-alive timeout still applies");
+            }
+            return;
+        }
+
+        boolean hardCap = options.maxMillis() > 0L && total >= options.maxMillis();
+        if (!hardCap) {
+            long lastTick = pingData.getLastClientTickAt();
+            if (lastTick == 0L || now - lastTick > options.freezeGapMillis()) return;
+            long stalled = now - Math.max(oldest, pingData.getClientActiveSince());
+            if (stalled < timeout) return;
+        }
+
+        player.timedOut("unanswered for " + total / 1000 + "s, brand " + player.getClientBrand()
+                + ", version " + player.getClientVersion().getReleaseName() + (hardCap ? ", hard cap" : ""));
+    }
+
+    private static String exemptReason(TGPlayer player, TransactionTimeoutOptions options) {
+        String brand = player.getClientBrand();
+        if (options.isExemptBrand(brand)) return "brand " + brand;
+        if (options.exemptLegacyClients() && player.getClientVersion().isOlderThan(ClientVersion.V_1_17)) {
+            return "legacy client " + player.getClientVersion().getReleaseName();
+        }
+        return null;
     }
 }

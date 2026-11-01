@@ -95,6 +95,27 @@ tick:
   # branch. Leave false on a stock setup.
   skip-keep-alive-validation: false
 
+# Players who stop answering TotemGuard's transaction pings are kicked with "Timed out".
+# Clients answer these on their main thread but keep-alives off it, so a client that is
+# frozen for a while (loading terrain, a hidden browser tab, a slow PC) still passes the
+# vanilla keep-alive check. Time a client spends frozen does not count towards the timeout.
+transaction-timeout:
+  # Seconds a client that keeps sending movement may leave a transaction unanswered.
+  timeout-seconds: 30
+  # Same, before the client has answered its first transaction after joining.
+  first-reply-timeout-seconds: 120
+  # No movement or tick packet for this many milliseconds means the client is frozen.
+  freeze-gap-millis: 3000
+  # Kick after this many seconds no matter what (0 = never). Exempt clients are never kicked.
+  max-seconds: 300
+  # Never kick clients older than 1.17 (ViaVersion / ViaRewind) on a transaction timeout.
+  # The vanilla keep-alive timeout still drops dead connections.
+  exempt-legacy-clients: true
+  # Never kick clients whose brand contains one of these (case-insensitive).
+  exempt-brands:
+    - eagler
+    - tuff
+
 # A vanilla client bug lets you keep moving while an inventory is open when the Debug
 # Modifier Key (F3) is bound to the same key as a movement key. When enabled, TotemGuard
 # reads the client's keybinds on join and disconnects players whose Debug Modifier Key

@@ -39,6 +39,7 @@ public final class ConfigView {
     private final boolean banAnimationEnabled;
     private final boolean tickSkipKeepAliveValidation;
     private final boolean debugModifierKickEnabled;
+    private final TransactionTimeoutOptions transactionTimeout;
     private final Set<String> developerOverrides;
 
     public ConfigView(Config config) {
@@ -85,6 +86,14 @@ public final class ConfigView {
         this.banAnimationEnabled = config.getBoolean(ConfigKeys.BAN_ANIMATION_ENABLED);
         this.tickSkipKeepAliveValidation = config.getBoolean(ConfigKeys.TICK_SKIP_KEEP_ALIVE_VALIDATION);
         this.debugModifierKickEnabled = config.getBoolean(ConfigKeys.DEBUG_MODIFIER_KICK_ENABLED);
+        this.transactionTimeout = TransactionTimeoutOptions.of(
+                config.getInt(ConfigKeys.TRANSACTION_TIMEOUT_SECONDS),
+                config.getInt(ConfigKeys.TRANSACTION_TIMEOUT_FIRST_REPLY_SECONDS),
+                config.getInt(ConfigKeys.TRANSACTION_TIMEOUT_FREEZE_GAP_MILLIS),
+                config.getInt(ConfigKeys.TRANSACTION_TIMEOUT_MAX_SECONDS),
+                config.getBoolean(ConfigKeys.TRANSACTION_TIMEOUT_EXEMPT_LEGACY),
+                config.getStringList(ConfigKeys.TRANSACTION_TIMEOUT_EXEMPT_BRANDS)
+        );
         List<String> overrides = config.getStringList(ConfigKeys.DEVELOPER_OVERRIDES);
         this.developerOverrides = overrides.isEmpty() ? Set.of() : Set.copyOf(new HashSet<>(overrides));
     }
@@ -127,6 +136,10 @@ public final class ConfigView {
 
     public boolean debugModifierKickEnabled() {
         return debugModifierKickEnabled;
+    }
+
+    public @NotNull TransactionTimeoutOptions transactionTimeout() {
+        return transactionTimeout;
     }
 
     public boolean hasDeveloperOverride(@NotNull String flag) {
